@@ -1,0 +1,268 @@
+import os
+
+users = [
+    ["admin", "admin123","Admin"],
+    ["Ririn", "2609106017", "User"]
+]
+
+koleksi = [
+    ["Naruto", "Anime", "Selesai", 9, "Ririn"],
+    ["One Piece", "Manga", "Sedang ditonton/dibaca", 10, "Ririn"]
+]
+
+TIPE = ("Anime", "Manga")
+STATUS = ("Sedang ditonton/dibaca", "Selesai", "Rencana")
+
+#============ PROGRAM UTAMA ============
+
+while True:
+    os.system("cls" if os.name == "nt" else "clear")
+    print("=" * 45)
+    print(" SISTEM KOLEKSI ANIME DAN MANGA PRIBADI")
+    print("=" * 45)
+    print("1. Login")
+    print("2. Register")
+    print("3. Keluar")
+    pilih = input("Pilih menu (1-3): ").strip()
+
+#------------ REGISTER ------------
+    if pilih == "2":
+        os.system("cls" if os.name == "nt" else "clear")
+        print("=== REGISTER ===")
+        username_baru = input("Username baru: ").strip()
+        password_baru = input("Password baru: ").strip()
+
+        sudah_ada = False
+        for u in users:
+            if u[0] == username_baru: sudah_ada = True
+
+        if username_baru == "" or password_baru == "":
+            print("Username dan password tidak boleh kosong!")
+        elif " " in username_baru:
+            print("Username tidak boleh mengandung spasi!")
+        elif len(password_baru) < 4:
+            print("Password minimal 4 karakter!")
+        elif sudah_ada:
+            print("Username sudah dipakai, coba yang lain!")
+        else:
+            users.append([username_baru, password_baru, "baru"])
+            print("Register berhasil! Silahkan login.")
+        input("Tekan Enter untuk kembali...")
+
+#------------ LOGIN ------------
+
+    elif pilih == "1":
+        os.system("cls" if os.name == "nt" else "clear")
+        print("=== LOGIN ===") 
+        percobaan =0
+        akun = None
+
+        while percobaan < 3:
+            username = input("Username: ").strip()
+            password = input("Password: ").strip()
+
+            for u in users:
+                if u[0] == username and u[1] == password:
+                        akun = u
+
+            if akun is not None:
+                    break
+
+            percobaan += 1
+            if percobaan < 3:
+                    print(f"Username/password salah! Sisa percobaan: {3 - percobaan}")
+
+        if akun is None:
+            print("Kesempatan login habis. Program berhenti.")
+            break
+
+        nama = akun[0]
+        role = akun[2]
+
+#============ MENU SETELAH LOGIN ============
+
+        while True:
+            os.system("cls" if os.name == "nt" else "clear")
+            print("=" * 45)
+            print(f" Halo, {nama} ({role})")
+            print("=" * 45)
+            print("1. Tambah koleksi (Create)")
+            print("2. Lihat koleksi (Read)")
+            print("3. Ubah koleksi (Update)")
+            print("4. Hapus koleksi (Delete)")
+            if role == "Admin":
+                print("5. Lihat daftar pengguna")
+                print("6. Logout")
+            else:
+                print("5. Logout")
+            menu = input("Pilih menu: ").strip()
+
+        # samakan nomor logout agar mudah dicetak
+
+            if role == "Admin" and menu == "6":
+                menu = "Logout"
+            elif role == "User" and menu == "5":
+                menu = "Logout"
+
+#------------ CREATE ------------
+
+            if menu == "1":
+                os.system("cls" if os.name == "nt" else "clear")
+                print("=== TAMBAH KOLEKSI ===")
+                judul = input("Judul: ").strip()
+
+                print("Tipe: 1. Anime 2. Manga")
+                tipe_pilih = input("Pilih tipe (1-2): ").strip()
+
+                print("Status: 1. Sedang ditonton/dibaca 2. Selesai 3. Rencana")
+                status_pilih = input("Pilih status (1-3): ").strip()
+
+                rating = input("Rating (1-10): ").strip()
+                
+                duplikat = False
+                for k in koleksi:
+                    if k[0].lower() == judul.lower() and k[4] == nama: 
+                        duplikat = True
+
+                if judul == "":
+                    print("Judul tidak boleh kosong!")
+                elif tipe_pilih not in ("1", "2"):
+                    print("Pilihan tipe harus 1 atau 2!")
+                elif status_pilih not in ("1", "2", "3"):
+                    print("Pilihan status harus 1, 2, atau 3!")
+                elif not rating.isdigit():
+                    print("Rating harus berupa angka!")
+                elif int(rating) < 1 or int(rating) > 10:
+                    print("Rating harus di antara 1 sampai 10!")
+                elif duplikat:
+                    print("Judul tersebut sudah ada dikoleksi kamu!")
+                else:
+                    koleksi.append([judul, TIPE[int(tipe_pilih) - 1], 
+                                    STATUS[int(status_pilih) - 1], 
+                                    int(rating), 
+                                    nama
+                    ])
+                    print("Koleksi berhasil ditambahkan!")
+                input("Tekan enter untuk kembali...")
+
+#------------ READ ------------
+
+            elif menu == "2":
+                os.system("cls" if os.name == "nt" else "clear")
+                print("=== DAFTAR KOLEKSI ===")
+                nomor = 0
+                for k in koleksi:
+                    if role == "Admin" or k[4] == nama:
+                        nomor += 1
+                        print(f"{nomor}, {k[0]} | {k[1]} | {k[2]} | Rating: {k[3]}", end="")
+                        if role == "Admin":
+                            print(f" | Pemilik: {k[4]}")
+                        else:
+                            print()
+                if nomor == 0:
+                    print("Belum ada koleksi.")
+                input("\nTekan Enter untuk kembali...")
+
+#------------ UPDATE ------------
+
+            elif menu == "3":
+                os.system("cls" if os.name == "nt" else "clear")
+                print("=== UBAH KOLEKSI ===")
+                daftar = []
+                for i in range(len(koleksi)):
+                    if role == "Admin" or koleksi[i][4] == nama:
+                        daftar.append(i)
+                if len(daftar) == 0:
+                    print("Koleksi masih kosong.")
+                else:
+                    for no in range(len(daftar)):
+                        k = koleksi[daftar[no]]
+                        print(f"{no + 1}. {k[0]} | {k[1]} | {k[2]} | Rating: {k[3]}")
+                    nomor = input("Nomor yang ingin diubah:").strip()
+                    if not nomor.isdigit():
+                        print("Input harus berupa angka!")
+                    elif int(nomor) < 1 or int(nomor) > len(daftar):
+                        print("Nomor tidak ada di daftar!")
+                    else:
+                        idx = daftar[int(nomor) - 1]
+                        print("Yang diubah: 1. Status 2. Rating")
+                        ubah = input("Pilih (1-2): ").strip()
+
+                        if ubah == "1":
+                            print("Status: 1. Sedang ditonton/dibaca 2. Selesai 3. Rencana")
+
+                            status_pilih = input("Pilih status baru (1-3): ").strip()
+                            if status_pilih not in ("1", "2", "3"):
+                                print("Pilihan status harus 1, 2, atau 3!")
+                            else:
+                                koleksi[idx][2] = STATUS[int(status_pilih) - 1]
+                                print("Status berhasil diubah!")
+                        elif ubah == "2":
+                            rating = input("Rating baru (1-10): ").strip()
+                            if not rating.isdigit():
+                                print("Rating harus berupa angka!")
+                            elif int(rating) < 1 or int(rating) > 10:
+                                print("Rating harus di antara 1 sampai 10!")
+                            else:
+                                koleksi[idx][3] = int(rating)
+                                print("Rating berhasil diubah!")
+                        else:
+                            print("Pilihan tidak valid!")
+                input("Tekan Enter untuk kembali...")
+
+#------------ DELETE ----------
+
+            elif menu == "4":
+                os.system("cls" if os.name == "nt" else "clear")
+                print("=== HAPUS KOLEKSI ===")
+                daftar = []
+                for i in range(len(koleksi)):
+                    if role == "Admin" or koleksi[i][4] == nama:
+                        daftar.append(i)
+                if len(daftar) == 0:
+                    print("Koleksi masih kosong.")
+                else:
+                    for no in range(len(daftar)):
+                        k = koleksi[daftar[no]]
+                        print(f"{no + 1}. {k[0]} | {k[1]} | {k[2]} | Rating: {k[3]}")
+                    nomor = input("Nomor yang ingin dihapus: ").strip()
+                    if not nomor.isdigit():
+                        print("Input harus berupa angka!")
+                    elif int(nomor) < 1 or int(nomor) > len(daftar):
+                        print("Nomor tidak ada di daftar")
+                    else:
+                        idx = daftar[int(nomor) - 1]
+                        yakin = input(f"Yakin hapus '{koleksi[idx][0]}'? (y/n): ").strip().lower()
+                        if yakin == "y":
+                            koleksi.pop(idx)
+                            print("Koleksi berhasil dihapus!")
+                        elif yakin == "n":
+                            print("Penghapusan dibatalkan")
+                        else:
+                            print("Pilihan tidak valid, penghapusan dibatalkan.")
+                input("Tekan Enter umtuk kembali...")
+
+#------------ LIHAT PENGGUNA (ADMIN) ------------
+
+            elif menu == "5" and role == "Admin":
+                os.system("cls" if os.name == "nt" else "clear")
+                print("=== DAFTAR PENGGUNA ===")
+                for i in range(len(users)):
+                    print(f"{i + 1}. {users[i][0]} {users[i][2]}")
+                input("\nTekan Enter untuk kembali...")
+
+#------------ LOGOUT ------------
+
+            elif menu == "5" or menu == "logout":
+                print("logout berhasil.")
+                input("Tekan Enter untuk kembali...")
+                break
+
+#------------ KELUAR ------------
+
+    elif pilih == "3":
+        print("Terima kasih, sampai jumpa!")
+        break
+    else:
+        print("Menu tidak valid!")
+        input("Tekan Enter untuk kembali...")
