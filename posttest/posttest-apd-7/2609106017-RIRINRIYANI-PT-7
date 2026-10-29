@@ -1,0 +1,285 @@
+import os
+
+users = {
+    "admin": {"password": "admin123", "role": "Admin"},
+    "Ririn": {"password": "2609106017", "role": "User"}
+}
+
+koleksi = {
+    1: {"judul": "Naruto", "tipe": "Anime", "status": "Selesai", "rating": 9, "pemilik": "Ririn"},
+    2: {"judul": "One Piece", "tipe": "Manga", "status": "Sedang ditonton/dibaca", "rating": 10, "pemilik": "Ririn"}
+}
+id_berikutnya = 3
+
+TIPE = {"1": "Anime", "2": "Manga"}
+STATUS = {"1": "Sedang ditonton/dibaca", "2": "Selesai", "3": "Rencana"}
+
+def bersihkan_layar():
+    os.system("cls" if os.name == "nt" else "clear")
+
+def tampilkan_koleksi(nama, role):
+    jumlah = 0
+    for id_k, data in koleksi.items():
+        if role == "Admin" or data["pemilik"] == nama:
+            jumlah += 1
+            baris = f"ID {id_k} | {data['judul']} | {data['tipe']} | {data['status']} | Rating: {data['rating']}"
+            if role == "Admin":
+                baris += f" | Pemilik: {data['pemilik']}"
+            print(baris)
+    if jumlah == 0:
+        print("Belum ada koleksi.")
+
+def validasi_rating(teks):
+    try:
+        angka = int(teks.strip())
+    except ValueError:
+        raise ValueError("Rating harus berupa angka!")
+    if angka < 1 or angka > 10:
+        raise ValueError("Rating harus di antara 1 sampai 10!")
+    return angka
+
+def cek_duplikat(judul, pemilik):
+    for data in koleksi.values():
+        if data["judul"].lower() == judul.lower() and data["pemilik"] == pemilik:
+            return True
+        return False
+
+def ambil_id_baru():
+    global id_berikutnya
+    id_baru = id_berikutnya
+    id_berikutnya += 1
+    return id_baru
+
+def hitung_total_koleksi():
+    total = len(koleksi)
+    return total
+
+#============ PROGRAM UTAMA ============
+
+while True:
+    bersihkan_layar()
+    print("=" * 45)
+    print(" SISTEM KOLEKSI ANIME DAN MANGA PRIBADI")
+    print("=" * 45)
+    print("1. Login")
+    print("2. Register")
+    print("3. Keluar")
+    pilih = input("Pilih menu (1-3): ").strip()
+
+#------------ REGISTER ------------
+    if pilih == "2":
+        bersihkan_layar()
+        print("=== REGISTER ===")
+        try:
+            username_baru = input("Username baru: ").strip()
+            password_baru = input("Password baru: ").strip()
+
+            if username_baru == "" or password_baru == "":
+                raise ValueError("Username dan password tidak boleh kosong!")
+            if " " in username_baru:
+                raise ValueError("Username tidak boleh mengandung spasi!")
+            if len(password_baru) < 4:
+                raise ValueError("Password minimal 4 karakter!")
+            if username_baru in users:
+                raise ValueError("Username sudah dipakai, coba yang lain!")
+        except ValueError as e:
+            print(f"Error: {e}")
+        else:
+            users[username_baru] = {"password": password_baru, "role": "User"}
+            print("Register berhasil! Silahkan login.")
+        finally:
+            input("Tekan Enter untuk kembali...")
+
+#------------ LOGIN ------------
+
+    elif pilih == "1":
+        bersihkan_layar()
+        print("=== LOGIN ===") 
+        percobaan =0
+        akun = None
+
+        while percobaan < 3:
+            username = input("Username: ").strip()
+            password = input("Password: ").strip()
+
+            try:
+                if users[username]["password"] != password:
+                    raise ValueError("Password salah")
+                akun = username
+                break
+            except (KeyError, ValueError):
+                percobaan += 1
+                if percobaan < 3:
+                    print(f"Username/password salah! Sisa percobaan: {3 - percobaan}")
+
+        if akun is None:
+            print("Kesempatan login habis. Program berhenti.")
+            break
+
+        nama = akun
+        role = users[akun]["role"]
+
+#============ MENU SETELAH LOGIN ============
+
+        while True:
+            bersihkan_layar()
+            print("=" * 45)
+            print(f" Halo, {nama} ({role})")
+            print(f" Total koleksi tersimpan: {hitung_total_koleksi()}")
+            print("=" * 45)
+            print("1. Tambah koleksi (Create)")
+            print("2. Lihat koleksi (Read)")
+            print("3. Ubah koleksi (Update)")
+            print("4. Hapus koleksi (Delete)")
+            if role == "Admin":
+                print("5. Lihat daftar pengguna")
+                print("6. Logout")
+                nomor_logout = "6"
+            else:
+                print("5. Logout")
+                nomor_logout = "5"
+            menu = input("Pilih menu: ").strip()
+
+#------------ CREATE ------------
+
+            if menu == "1":
+                bersihkan_layar()
+                print("=== TAMBAH KOLEKSI ===")
+                try:
+                    judul = input("Judul: ").strip()
+                    if judul == "":
+                        raise ValueError("Judul tidak boleh kosong!")
+                    
+                    print("Tipe: 1. Anime 2. Manga")
+                    tipe_pilih = input("Pilih tipe (1-2): ").strip()
+                    if tipe_pilih not in TIPE:
+                        raise ValueError("Pilihan tipe harus 1 atau 2!")
+                    
+                    print("Status: 1. Sedang ditonton/dibaca 2. Selesai 3. Rencana")
+                    status_pilih = input("Pilih status (1-3): ").strip()
+                    if status_pilih not in STATUS:
+                        raise ValueError("Pilihan status harus 1, 2, atau 3!")
+
+                    rating = validasi_rating(input("Rating (1-10): "))
+
+                    if cek_duplikat(judul, nama):
+                        raise ValueError("Judul tersebut sudah ada di koleksi kamu!")
+                except ValueError as e:
+                    print(f"Error: {e}")
+                else:
+                    koleksi[ambil_id_baru()] = {
+                        "judul": judul,
+                        "tipe": TIPE[tipe_pilih],
+                        "status": STATUS[status_pilih],
+                        "rating": rating,
+                        "pemilik": nama
+                    }
+                    print("Koleksi berhasil ditambahkan!")
+                finally:
+                    input("Tekan Enter untuk kembali...")
+
+#------------ READ ------------
+            
+            elif menu == "2":
+                bersihkan_layar()
+                print("=== DAFTAR KOLEKSI ===")
+                tampilkan_koleksi(nama, role)
+                input("\nTekan Enter untuk kembali...")
+
+#------------ UPDATE ------------
+
+            elif menu == "3":
+                bersihkan_layar()
+                print("=== UBAH KOLEKSI ===")
+                tampilkan_koleksi(nama, role)
+                try:
+                    id_input = input("ID yang ingin diubah: ").strip()
+                    if not id_input.isdigit():
+                        raise ValueError("Input harus berupa angka!")
+
+                    data = koleksi[int(id_input)]  # KeyError jika ID tidak ada
+                    if role != "Admin" and data["pemilik"] != nama:
+                        raise PermissionError("Kamu tidak berhak mengubah koleksi ini!")
+
+                    print("Yang diubah: 1. Status 2. Rating")
+                    ubah = input("Pilih (1-2): ").strip()
+
+                    if ubah == "1":
+                        print("Status: 1. Sedang ditonton/dibaca 2. Selesai 3. Rencana")
+                        status_pilih = input("Pilih status baru (1-3): ").strip()
+                        if status_pilih not in STATUS:
+                            raise ValueError("Pilihan status harus 1, 2, atau 3!")
+                        data["status"] = STATUS[status_pilih]
+                        print("Status berhasil diubah!")
+                    elif ubah == "2":
+                        data["rating"] = validasi_rating(input("Rating baru (1-10): "))
+                        print("Rating berhasil diubah!")
+                    else:
+                        raise ValueError("Pilihan tidak valid!")
+                except KeyError:
+                    print("Error: ID tidak ada di daftar!")
+                except (ValueError, PermissionError) as e:
+                    print(f"Error: {e}")
+                finally:
+                    input("Tekan Enter untuk kembali...")
+
+#------------ DELETE ------------
+
+            elif menu == "4":
+                bersihkan_layar()
+                print("=== HAPUS KOLEKSI ===")
+                tampilkan_koleksi(nama, role)
+                try:
+                    id_input = input("ID yang ingin dihapus: ").strip()
+                    if not id_input.isdigit():
+                        raise ValueError("Input harus berupa angka!")
+
+                    id_hapus = int(id_input)
+                    data = koleksi[id_hapus]  # KeyError jika ID tidak ada
+                    if role != "Admin" and data["pemilik"] != nama:
+                        raise PermissionError("Kamu tidak berhak menghapus koleksi ini!")
+
+                    yakin = input(f"Yakin hapus '{data['judul']}'? (y/n): ").strip().lower()
+                    if yakin == "y":
+                        del koleksi[id_hapus]
+                        print("Koleksi berhasil dihapus!")
+                    elif yakin == "n":
+                        print("Penghapusan dibatalkan.")
+                    else:
+                        raise ValueError("Pilihan tidak valid, penghapusan dibatalkan.")
+                except KeyError:
+                    print("Error: ID tidak ada di daftar!")
+                except (ValueError, PermissionError) as e:
+                    print(f"Error: {e}")
+                finally:
+                    input("Tekan Enter untuk kembali...")
+
+#------------ LIHAT PENGGUNA (ADMIN) ------------
+
+            elif menu == "5" and role == "Admin":
+                bersihkan_layar()
+                print("=== DAFTAR PENGGUNA ===")
+                nomor = 0
+                for username_u, info in users.items():
+                    nomor += 1
+                    print(f"{nomor}. {username_u} ({info['role']})")
+                input("\nTekan Enter untuk kembali...")
+
+#------------ LOGOUT ------------
+
+            elif menu == nomor_logout:
+                print("logout berhasil.")
+                input("Tekan Enter untuk kembali...")
+                break
+            else:
+                print("Menu tidak valid!")
+                input("Tekan Enter untuk kembali...")
+
+#------------ KELUAR ------------
+
+    elif pilih == "3":
+        print("Terima kasih, sampai jumpa!")
+        break
+    else:
+        print("Menu tidak valid!")
+        input("Tekan Enter untuk kembali...")
